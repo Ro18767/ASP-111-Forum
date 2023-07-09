@@ -1,0 +1,46 @@
+﻿@model ASP_111.Models.Forum.Index.ForumSectionViewModel
+
+<div class="card mb-3">
+    
+        
+        <div class="card-body">
+        <div class="row g-0">
+            <div class="col-md-2">
+            <img src="@Model.ImageUrl"
+                 class="img-fluid rounded-start" 
+                 alt="section">
+            </div>
+            <div class="col-md-10">
+            <h5 class="card-title">@Model.Title</h5>
+                <p class="card-text">@Model.Description</p>
+                <p class="card-text"><small class="text-muted">Створено: @Model.CreateDt</small></p>
+            </div>
+        </div>
+        </div>
+                
+        <div class="card-footer">
+        
+            <div class="row" >
+                <div class="col-auto">
+                    Автор: 
+                    <span title="@Model.Author.Email">
+                        @Model.Author.Name
+                    </span>
+                </div>
+                
+                <div class="col-auto">
+                    <i class="bi bi-hand-thumbs-up"></i> 234
+                </div>
+                <div class="col-auto">
+                    <i class="bi bi-hand-thumbs-down"></i> 45
+                </div>
+                <div class="col"></div>
+                <div class="col-auto">
+                    <h3>
+                        <a asp-controller="Forum" asp-action="Section" asp-route-id="@(Model.Id)" class="btn btn-outline-secondary ms-auto" ><i class="bi bi-arrow-right-square"></i></a>
+                </div>
+            </div>
+        </div>
+</div>
+Д.З. Разместить на карточке секции информацию об аватарке автора этой секции
+* Дизайн футера карточки
