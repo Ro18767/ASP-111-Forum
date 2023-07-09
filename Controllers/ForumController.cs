@@ -63,7 +63,7 @@ namespace ASP_111.Controllers
                         Description = s.Description,
                         CreateDt = s.CreateDt.ToShortDateString(),
                         ImageUrl = s.ImageUrl == null
-                            ? $"/img/section/section{n++}.png"
+                            ? $"/img/section/no-photo.png"
                             : $"/img/section/{s.ImageUrl}",
                         Author = new(s.Author),
                     }),
@@ -99,13 +99,28 @@ namespace ASP_111.Controllers
             Guid? userId = _authUserService.GetUserId(HttpContext);
             if (userId != null)
             {
+                String? ImageUrl = null;
+                if (model.ImageFile.Length > 1048576)
+                {
+                } else
+                {
+                    String ext = Path.GetExtension(model.ImageFile.FileName);
+
+                    // формируем имя для файла
+                    ImageUrl = Guid.NewGuid().ToString() + ext;
+
+                    using var fstream = new FileStream("wwwroot/img/section/" + ImageUrl, FileMode.Create);
+                    model.ImageFile.CopyTo(fstream);
+                } 
+       
+
                 _dataContext.Sections.Add(new()
                 {
                     Id = Guid.NewGuid(),
                     Title = model.Title,
                     Description = model.Description,
                     CreateDt = DateTime.Now,
-                    ImageUrl = null,
+                    ImageUrl = ImageUrl,
                     DeleteDt = null,
                     AuthorId = userId.Value,
                 });
@@ -138,20 +153,21 @@ namespace ASP_111.Controllers
             Guid? userId = _authUserService.GetUserId(HttpContext);
             if (userId != null)
             {
-                String? nameAvatar = null;
-                if (model.ImageFile != null)
+                String? ImageUrl = null;
+                if (model.ImageFile.Length > 1048576)
                 {
-
-                    // определяем расширение файла
+                }
+                else
+                {
                     String ext = Path.GetExtension(model.ImageFile.FileName);
-                    // проверить расширение на перечень допустимых
 
                     // формируем имя для файла
-                    nameAvatar = Guid.NewGuid().ToString() + ext;
+                    ImageUrl = Guid.NewGuid().ToString() + ext;
 
-                    using var fstream = new FileStream("wwwroot/img/" + nameAvatar, FileMode.Create);
+                    using var fstream = new FileStream("wwwroot/img/section/" + ImageUrl, FileMode.Create);
                     model.ImageFile.CopyTo(fstream);
                 }
+
                 _dataContext.Topics.Add(new()
                 {
                     Id = Guid.NewGuid(),
@@ -159,7 +175,7 @@ namespace ASP_111.Controllers
                     Title = model.Title,
                     Description = model.Description,
                     CreateDt = DateTime.Now,
-                    ImageUrl = nameAvatar,
+                    ImageUrl = ImageUrl,
                     DeleteDt = null,
                     AuthorId = userId.Value,
                 });
