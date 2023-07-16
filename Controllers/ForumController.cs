@@ -9,6 +9,8 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Text.Json;
 using static System.Net.Mime.MediaTypeNames;
+using ASP_111.Models.Forum.Section;
+using Microsoft.AspNetCore.Http;
 
 namespace ASP_111.Controllers
 {
@@ -27,23 +29,29 @@ namespace ASP_111.Controllers
             _validationService = validationService;
         }
 
-        public ViewResult Section([FromRoute] Guid id)
+  public ViewResult Section( [FromRoute] Guid id )
         {
-            SectionViewModel sectionViewModel = new()
-            {
-                SectionId = id.ToString(),
-            };
-            if (HttpContext.Session.Keys.Contains("AddTopicMessage"))
-            {
-                sectionViewModel.ErrorMessages = JsonSerializer.Deserialize<Dictionary<string, string?>>(HttpContext.Session.GetString("AddTopicMessage"));
-                HttpContext.Session.Remove("AddTopicMessage");
-            }
-                // проверяем есть ли в сессии сообщение о валидации формы,
-                // если есть, извлекаем, десериализуем и передаем на 
-                // представление (все сообщения) вместе с данными формы, которые
-                // подставятся обратно в поля формы
+            SectionViewModel model = null!;
 
-            return View(sectionViewModel);
+            if (HttpContext.Session.Keys.Contains("FormData"))
+            {
+                String? data = HttpContext.Session.GetString("FormData");
+                if (data != null)
+                {
+                    model = System.Text.Json.JsonSerializer
+                        .Deserialize<SectionViewModel>(data)!;
+                }
+                else
+                {
+                    model = null!;
+                }
+                HttpContext.Session.Remove("FormData");
+            }
+            model ??= new();
+            
+            model.SectionId = id.ToString();
+
+            return View(model);
         }
 
         public IActionResult Index()
@@ -167,7 +175,15 @@ namespace ASP_111.Controllers
             {
                 if (message != null)
                 {
-                    HttpContext.Session.SetString("AddTopicMessage", JsonSerializer.Serialize(messages));
+                    model.ImageFile = null!;
+
+                    SectionViewModel viewModel = new()
+                    {
+                        FormModel = model,
+                        ErrorMessages = messages,
+                    };
+
+                    HttpContext.Session.SetString("FormData", JsonSerializer.Serialize(viewModel));
 
                     return RedirectToAction(nameof(Section), new
                     {
@@ -183,10 +199,7 @@ namespace ASP_111.Controllers
             if (userId != null)
             {
                 String? ImageUrl = null;
-                if (model.ImageFile.Length > 1048576)
-                {
-                }
-                else
+                if (model.ImageFile != null && model.ImageFile.Length < 1048576)
                 {
                     String ext = Path.GetExtension(model.ImageFile.FileName);
 
