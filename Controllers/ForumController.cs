@@ -1,6 +1,7 @@
 ﻿using ASP_111.Data;
 using ASP_111.Models.Forum.Index;
 using ASP_111.Models.Forum.Section;
+using ASP_111.Models.User;
 using ASP_111.Services.AuthUser;
 using ASP_111.Services.Validation;
 using Microsoft.AspNetCore.Mvc;
@@ -47,10 +48,25 @@ namespace ASP_111.Controllers
 
         public IActionResult Index()
         {
-            int n = 0;
-            ForumIndexModel model = new()
+            ForumIndexModel model = null!;
+
+            if (HttpContext.Session.Keys.Contains("FormData"))
             {
-                Sections = _dataContext
+                String? data = HttpContext.Session.GetString("FormData");
+                if (data != null)
+                {
+                    model = System.Text.Json.JsonSerializer
+                        .Deserialize<ForumIndexModel>(data)!;
+                }
+                else
+                {
+                    model = null!;
+                }
+                HttpContext.Session.Remove("FormData");
+            }
+            model ??= new();
+
+            model.Sections = _dataContext
                     .Sections
                     .Include(s => s.Author)
                     .Where(s => s.DeleteDt == null)
@@ -66,12 +82,11 @@ namespace ASP_111.Controllers
                             ? $"/img/section/no-photo.png"
                             : $"/img/section/{s.ImageUrl}",
                         Author = new(s.Author),
-                    }),
+                    });
                 // проверяем есть ли в сессии сообщение о валидации формы,
                 // если есть, извлекаем, десериализуем и передаем на 
                 // представление (все сообщения) вместе с данными формы, которые
                 // подставятся обратно в поля формы
-            };
 
 
             return View(model);
@@ -85,6 +100,9 @@ namespace ASP_111.Controllers
         [HttpPost]
         public RedirectToActionResult AddSection(ForumSectionFormModel model)
         {
+
+          
+
             var messages = _validationService.ErrorMessages(model);
             foreach (var (key, message) in messages)
             {
@@ -93,6 +111,18 @@ namespace ASP_111.Controllers
                     // есть сообщение об ошибке - 
                     // сериализуем все сообщения, сохраняем в сессии и
                     // перенаправляем на Index
+
+                    model.ImageFile = null!;
+
+                    ForumIndexModel viewModel = new()
+                    {
+                        FormModel = model,
+                        ErrorValidationMessages = messages,
+                    };
+
+                    HttpContext.Session.SetString("FormData", JsonSerializer.Serialize(viewModel));
+
+                    return RedirectToAction(nameof(Index));
                 }
             }
             // проверяем что пользователь аутентифицирован
@@ -100,9 +130,7 @@ namespace ASP_111.Controllers
             if (userId != null)
             {
                 String? ImageUrl = null;
-                if (model.ImageFile.Length > 1048576)
-                {
-                } else
+                if (model.ImageFile != null && model.ImageFile.Length < 1048576)
                 {
                     String ext = Path.GetExtension(model.ImageFile.FileName);
 
@@ -111,8 +139,8 @@ namespace ASP_111.Controllers
 
                     using var fstream = new FileStream("wwwroot/img/section/" + ImageUrl, FileMode.Create);
                     model.ImageFile.CopyTo(fstream);
-                } 
-       
+                }
+
 
                 _dataContext.Sections.Add(new()
                 {
@@ -127,6 +155,7 @@ namespace ASP_111.Controllers
                 _dataContext.SaveChanges();
                 _logger.LogInformation("Add OK");
             }
+
             return RedirectToAction(nameof(Index));
         }
 

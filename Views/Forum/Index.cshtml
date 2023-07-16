@@ -15,36 +15,88 @@
     </div>
 </div>
 
+@($"FormModel == null {Model.FormModel is null}")
 @if (Context.User.Identity?.IsAuthenticated == true)
 {
-    <form asp-action="AddSection" asp-controller="Forum" 
+    bool hasError = Model.ErrorValidationMessages != null && Model.FormModel != null;
+
+    Dictionary<string, string?> messages = Model.ErrorValidationMessages!;
+    ASP_111.Models.Forum.Index.ForumSectionFormModel? FormModel = Model.FormModel;
+    string validClass = "";
+    string message = "";
+
+
+    <form asp-action="AddSection" asp-controller="Forum"
           method="post" enctype="multipart/form-data">
 
+
         <label for="section-title" class="form-label">Заголовок</label>
+        @{
+            validClass = "";
+            if (hasError)
+            {
+                message = messages.ContainsKey("Title") ? (messages["Title"] ?? "") : "";
+                validClass = message.Length > 0 ? "is-valid" : "is-invalid";
+            }
+        }
         <div class="input-group mb-3">
             <span class="input-group-text py-0 px-2"
                   id="section-title-addon"><i class="bi bi-chat-quote"></i></span>
-            <input type="text" class="form-control"
-                    id="section-title" name="section-title"
+            <input type="text" class="form-control @validClass"
+                   id="section-title" name="section-title" value="@(FormModel?.Title ?? "")"
                     placeholder="Введіть назву розділу"
                     aria-describedby="section-title-addon">
+            @if (message.Length > 0)
+            {
+                <div class="invalid-feedback">
+                    @message
+                </div>
+            }
         </div>
-
+                
         <label for="section-description" class="form-label">Опис</label>
+        @{
+            validClass = "";
+            if (hasError)
+            {
+                message = messages.ContainsKey("Description") ? messages["Description"] ?? "" : "";
+                validClass = message.Length > 0 ? "is-valid" : "is-invalid";
+            }
+        }
         <div class="input-group mb-3">
             <span class="input-group-text"><i class="bi bi-book"></i></span>
-            <textarea class="form-control" aria-label="With textarea"
+            <textarea class="form-control @validClass" aria-label="With textarea"
                       id="section-description" name="section-description"
-                      placeholder="Введіть опис розділу"></textarea>
+                      placeholder="Введіть опис розділу">@(FormModel?.Description ?? "")</textarea>
+            @if (message.Length > 0)
+            {
+                <div class="invalid-feedback">
+                    @message
+                </div>
+            }
         </div>
 
         <label for="section-image" class="form-label">Аватарка</label>
+        @{
+            validClass = "";
+            if (hasError)
+            {
+                message = messages.ContainsKey("ImageFile") ? messages["ImageFile"] ?? "" : "";
+                validClass = message.Length > 0 ? "is-valid" : "is-invalid";
+            }
+        }
         <div class="input-group mb-3">
             <span class="input-group-text py-0 px-2"
                   id="section-image-addon"><i class="bi bi-card-image"></i></span>
-            <input type="file" class="form-control custom-file-input"
+            <input type="file" class="form-control custom-file-input @validClass"
                    id="section-image" name="section-image"
                    aria-describedby="section-image-addon">
+            @if (message.Length > 0)
+            {
+                <div class="invalid-feedback">
+                    @message
+                </div>
+            }
         </div>
 
         <button type="submit" class="btn btn-primary">Додати</button>
