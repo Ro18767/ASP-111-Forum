@@ -17,7 +17,7 @@ namespace ASP_111.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("asp111forum")
-                .HasAnnotation("ProductVersion", "7.0.5")
+                .HasAnnotation("ProductVersion", "7.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             modelBuilder.Entity("ASP_111.Data.Entities.Comment", b =>
@@ -49,6 +49,10 @@ namespace ASP_111.Migrations
                         .HasColumnType("char(36)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.HasIndex("ThemeId");
 
                     b.ToTable("Comments", "asp111forum");
                 });
@@ -88,6 +92,7 @@ namespace ASP_111.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("ImageUrl")
@@ -128,6 +133,8 @@ namespace ASP_111.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AuthorId");
+
                     b.ToTable("Themes", "asp111forum");
                 });
 
@@ -160,6 +167,8 @@ namespace ASP_111.Migrations
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
 
                     b.ToTable("Topics", "asp111forum");
                 });
@@ -223,6 +232,34 @@ namespace ASP_111.Migrations
                     b.ToTable("Visits", "asp111forum");
                 });
 
+            modelBuilder.Entity("ASP_111.Data.Entities.Comment", b =>
+                {
+                    b.HasOne("ASP_111.Data.Entities.User", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ASP_111.Data.Entities.Theme", "Theme")
+                        .WithMany("Comments")
+                        .HasForeignKey("ThemeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Author");
+
+                    b.Navigation("Theme");
+                });
+
+            modelBuilder.Entity("ASP_111.Data.Entities.Rate", b =>
+                {
+                    b.HasOne("ASP_111.Data.Entities.Section", null)
+                        .WithMany("Rates")
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("ASP_111.Data.Entities.Section", b =>
                 {
                     b.HasOne("ASP_111.Data.Entities.User", "Author")
@@ -232,6 +269,38 @@ namespace ASP_111.Migrations
                         .IsRequired();
 
                     b.Navigation("Author");
+                });
+
+            modelBuilder.Entity("ASP_111.Data.Entities.Theme", b =>
+                {
+                    b.HasOne("ASP_111.Data.Entities.User", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Author");
+                });
+
+            modelBuilder.Entity("ASP_111.Data.Entities.Topic", b =>
+                {
+                    b.HasOne("ASP_111.Data.Entities.User", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Author");
+                });
+
+            modelBuilder.Entity("ASP_111.Data.Entities.Section", b =>
+                {
+                    b.Navigation("Rates");
+                });
+
+            modelBuilder.Entity("ASP_111.Data.Entities.Theme", b =>
+                {
+                    b.Navigation("Comments");
                 });
 #pragma warning restore 612, 618
         }

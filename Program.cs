@@ -19,6 +19,7 @@ builder.Services.AddControllersWithViews();
 // builder.Services.AddSingleton<DateService>();
 // "будут спрашивать IDateService - выдать объект DateService"
 builder.Services.AddSingleton<IDateService, DateService>();
+builder.Services.AddSingleton<FormatDateTimeService>();
 builder.Services.AddScoped<TimeService>();
 builder.Services.AddTransient<DateTimeService>();
 

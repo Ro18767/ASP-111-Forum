@@ -9,8 +9,9 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Text.Json;
 using static System.Net.Mime.MediaTypeNames;
-using ASP_111.Models.Forum.Section;
 using Microsoft.AspNetCore.Http;
+using ASP_111.Data.Entities;
+using ASP_111.Services;
 
 namespace ASP_111.Controllers
 {
@@ -20,18 +21,30 @@ namespace ASP_111.Controllers
         private readonly ILogger<ForumController> _logger;
         private readonly IAuthUserService _authUserService;
         private readonly IValidationService _validationService;
+        private readonly FormatDateTimeService _formatDateTimeService;
 
-        public ForumController(DataContext dataContext, ILogger<ForumController> logger, IAuthUserService authUserService, IValidationService validationService)
+        public ForumController(DataContext dataContext, ILogger<ForumController> logger, IAuthUserService authUserService, IValidationService validationService, FormatDateTimeService formatDateTimeService)
         {
             _dataContext = dataContext;
             _logger = logger;
             _authUserService = authUserService;
             _validationService = validationService;
+            _formatDateTimeService = formatDateTimeService;
         }
 
-  public ViewResult Section( [FromRoute] Guid id )
+        public IActionResult Section( [FromRoute] Guid id )
         {
-            SectionViewModel model = null!;
+            SectionPageModel model = null!;
+
+            var section = _dataContext.Sections
+                .Include(s => s.Author)
+                .FirstOrDefault(s => s.Id == id);
+
+            if (section == null)
+            {
+                Response.StatusCode = StatusCodes.Status404NotFound;
+                return NotFound();
+            }
 
             if (HttpContext.Session.Keys.Contains("FormData"))
             {
@@ -39,7 +52,7 @@ namespace ASP_111.Controllers
                 if (data != null)
                 {
                     model = System.Text.Json.JsonSerializer
-                        .Deserialize<SectionViewModel>(data)!;
+                        .Deserialize<SectionPageModel>(data)!;
                 }
                 else
                 {
@@ -48,9 +61,38 @@ namespace ASP_111.Controllers
                 HttpContext.Session.Remove("FormData");
             }
             model ??= new();
-            
+
             model.SectionId = id.ToString();
 
+
+            model.Section = new ForumSectionViewModel
+            {
+                Id = section.Id.ToString(),
+                Title = section.Title,
+                Description = section.Description,
+                CreateDt = _formatDateTimeService.Fromat(section.CreateDt),
+                Author = new(section.Author),
+            };
+
+
+            model.Topics =
+         _dataContext.Topics
+         .Include(t => t.Author)
+         
+         .OrderByDescending(t => t.CreateDt)
+         .AsEnumerable()
+         .Select(t => new TopicViewModel()
+         {
+             Id = t.Id.ToString(),
+             Title = t.Title,
+             Description = t.Description,
+             CreateDt = t.CreateDt.ToShortDateString(),
+             ImageUrl = "/img/" + t.ImageUrl,
+             Author = new(t.Author),
+         }).ToList();
+
+            
+            //
             return View(model);
         }
 
@@ -91,10 +133,10 @@ namespace ASP_111.Controllers
                             : $"/img/section/{s.ImageUrl}",
                         Author = new(s.Author),
                     });
-                // проверяем есть ли в сессии сообщение о валидации формы,
-                // если есть, извлекаем, десериализуем и передаем на 
-                // представление (все сообщения) вместе с данными формы, которые
-                // подставятся обратно в поля формы
+            // проверяем есть ли в сессии сообщение о валидации формы,
+            // если есть, извлекаем, десериализуем и передаем на 
+            // представление (все сообщения) вместе с данными формы, которые
+            // подставятся обратно в поля формы
 
 
             return View(model);
@@ -177,7 +219,7 @@ namespace ASP_111.Controllers
                 {
                     model.ImageFile = null!;
 
-                    SectionViewModel viewModel = new()
+                    SectionPageModel viewModel = new()
                     {
                         FormModel = model,
                         ErrorMessages = messages,
@@ -222,7 +264,6 @@ namespace ASP_111.Controllers
                     AuthorId = userId.Value,
                 });
                 _dataContext.SaveChanges();
-                _logger.LogInformation("Add OK");
             }
             return RedirectToAction(nameof(Section), new
             {

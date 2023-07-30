@@ -2,9 +2,9 @@
 {
     public class Rate
     {
-        public Guid     ItemId { get; set; }
-        public Guid     UserId { get; set; }
+        public Guid ItemId { get; set; }
+        public Guid UserId { get; set; }
         public DateTime Moment { get; set; }
-        public int      Rating { get; set; }
+        public int Rating { get; set; }
     }
 }

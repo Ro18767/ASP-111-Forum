@@ -15,7 +15,7 @@
     </div>
 </div>
 
-@($"FormModel == null {Model.FormModel is null}")
+@*@($"FormModel == null {Model.FormModel is null}")*@
 @if (Context.User.Identity?.IsAuthenticated == true)
 {
     bool hasError = Model.ErrorValidationMessages != null && Model.FormModel != null;
