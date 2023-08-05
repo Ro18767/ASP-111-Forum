@@ -212,7 +212,28 @@ namespace ASP_111.Controllers
 
         public IActionResult Topic([FromRoute] Guid id)
         {
-            TopicPageModel model = new();
+            var topic = _dataContext
+                .Topics
+                .Include(t => t.Author)
+                .FirstOrDefault(t => t.Id == id);
+
+            if (topic == null)
+            {
+                return NotFound();
+            }
+
+            TopicPageModel model = new()
+            {
+                Topic = new(topic)
+            };
+            model.Themes = _dataContext
+                .Themes
+                .Include(t => t.Author)
+                .Include(t => t.Comments)
+                .Where(t => t.TopicId == topic.Id && t.DeleteDt == null)
+                .Select(t => new ThemeViewModel(t))
+                .ToList();
+
             if (HttpContext.Session.Keys.Contains("AddThemeMessage"))
             {
                 model.ErrorMessages =
@@ -221,6 +242,7 @@ namespace ASP_111.Controllers
 
                 HttpContext.Session.Remove("AddThemeMessage");
             }
+
             return View(model);
         }
 
