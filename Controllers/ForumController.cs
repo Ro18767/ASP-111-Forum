@@ -6,6 +6,7 @@ using ASP_111.Services.AuthUser;
 using ASP_111.Services.Validation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ASP_111.Models.Forum.Topic;
 using System.Security.Claims;
 using System.Text.Json;
 using static System.Net.Mime.MediaTypeNames;
@@ -207,6 +208,64 @@ namespace ASP_111.Controllers
             }
 
             return RedirectToAction(nameof(Index));
+        }
+
+        public IActionResult Topic([FromRoute] Guid id)
+        {
+            TopicPageModel model = new();
+            if (HttpContext.Session.Keys.Contains("AddThemeMessage"))
+            {
+                model.ErrorMessages =
+                    JsonSerializer.Deserialize<Dictionary<String, String?>>(
+                        HttpContext.Session.GetString("AddThemeMessage")!);
+
+                HttpContext.Session.Remove("AddThemeMessage");
+            }
+            return View(model);
+        }
+
+        [HttpPost]
+        public RedirectToActionResult AddTheme(ThemeFormModel formModel)
+        {
+            var messages = _validationService.ErrorMessages(formModel);
+            foreach (var (key, message) in messages)
+            {
+                if (message != null)  // есть сообщение об ошибке
+                {
+                    HttpContext.Session.SetString(
+                        "AddThemeMessage",
+                        JsonSerializer.Serialize(messages)
+                    );
+                    return RedirectToAction(nameof(Topic), new { id = formModel.TopicId });
+                }
+            }
+            // проверяем что пользователь аутентифицирован
+            Guid? userId = _authUserService.GetUserId(HttpContext);
+            if (userId != null)
+            {
+                Guid themeId = Guid.NewGuid();
+                DateTime dt = DateTime.Now;
+
+                _dataContext.Themes.Add(new()
+                {
+                    Id = themeId,
+                    AuthorId = userId.Value,
+                    TopicId = formModel.TopicId,
+                    Title = formModel.Title,
+                    CreateDt = dt,
+                });
+                _dataContext.Comments.Add(new()
+                {
+                    Id = Guid.NewGuid(),
+                    AuthorId = userId.Value,
+                    Content = formModel.Content,
+                    ThemeId = themeId,
+                    CreateDt = dt,
+                });
+                // _dataContext.SaveChanges();
+            }
+
+            return RedirectToAction(nameof(Topic), new { id = formModel.TopicId });
         }
 
         [HttpPost]
