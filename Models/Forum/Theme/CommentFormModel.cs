@@ -1,21 +1,13 @@
-﻿namespace ASP_111.Models.Forum.Theme
+﻿using ASP_111.Services.Validation;
+
+namespace ASP_111.Models.Forum.Theme
 {
-    public class CommenrFromModel
+    public class CommentFormModel
     {
-            
-        public String Id { get; set; } = null!;
+        [ValidationRules(ValidationRule.NotEmpty)]
         public String Content { get; set; } = null!;
-        public String CreateDt { get; set; } = null!;
 
-        public CommenrFromModel()
-        {
-        }
-
-        public CommenrFromModel(Data.Entities.Comment comment)
-        {
-            Id = comment.Id.ToString();
-            Content = comment.Content;
-            CreateDt = comment.CreateDt.ToShortDateString();
-        }
+        public Guid ThemeId { get; set; }
+        public Guid? ReplyId { get; set; }
     }
 }

@@ -13,6 +13,8 @@ using static System.Net.Mime.MediaTypeNames;
 using Microsoft.AspNetCore.Http;
 using ASP_111.Data.Entities;
 using ASP_111.Services;
+using ASP_111.Models.Forum.Theme;
+using ASP_111.Models;
 
 namespace ASP_111.Controllers
 {
@@ -245,7 +247,72 @@ namespace ASP_111.Controllers
 
             return View(model);
         }
+        public IActionResult Theme([FromRoute] Guid id)
+        {
+            var theme = _dataContext
+                .Themes
+                .Include(t => t.Author)
+                .Where(t => t.DeleteDt == null && t.Id == id)
+                .FirstOrDefault();
 
+            if (theme == null)
+            {
+                return NotFound();
+            }
+
+            ThemePageModel pageModel = new()
+            {
+                Theme = new(theme),
+                Comments = _dataContext
+                    .Comments
+                    .Include(c => c.Author)
+                    .OrderBy(c => c.CreateDt)
+                    .Where(c => c.DeleteDt == null && c.ThemeId == id)
+                    .Select(c => new CommentViewModel(c))
+                    .ToList()
+            };
+
+            Guid? authUserId = _authUserService.GetUserId(HttpContext);
+            if (authUserId != null)
+            {
+                ViewData["authUser"] = new UserViewModel(
+                    _dataContext.Users.Find(authUserId.Value)!);
+            }
+            return View(pageModel);
+        }
+        [HttpPost]
+        public RedirectToActionResult AddComment([FromForm] CommentFormModel formModel)
+        {
+            var messages = _validationService.ErrorMessages(formModel);
+            foreach (var (key, message) in messages)
+            {
+                if (message != null)  // есть сообщение об ошибке
+                {
+                    HttpContext.Session.SetString(
+                        "AddCommentMessage",
+                        JsonSerializer.Serialize(messages)
+                    );
+                    return RedirectToAction(nameof(Theme), new { id = formModel.ThemeId });
+                }
+            }
+            // проверяем что пользователь аутентифицирован
+            Guid? userId = _authUserService.GetUserId(HttpContext);
+            if (userId != null)
+            {
+                _dataContext.Comments.Add(new()
+                {
+                    Id = Guid.NewGuid(),
+                    AuthorId = userId.Value,
+                    Content = formModel.Content,
+                    ThemeId = formModel.ThemeId,
+                    CreateDt = DateTime.Now,
+                    ReplyId = formModel.ReplyId,
+                });
+                _dataContext.SaveChanges();
+            }
+
+            return RedirectToAction(nameof(Theme), new { id = formModel.ThemeId });
+        }
         [HttpPost]
         public RedirectToActionResult AddTheme(ThemeFormModel formModel)
         {
@@ -284,7 +351,7 @@ namespace ASP_111.Controllers
                     ThemeId = themeId,
                     CreateDt = dt,
                 });
-                // _dataContext.SaveChanges();
+                _dataContext.SaveChanges();
             }
 
             return RedirectToAction(nameof(Topic), new { id = formModel.TopicId });
