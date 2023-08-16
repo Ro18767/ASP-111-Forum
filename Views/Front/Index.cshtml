@@ -1,0 +1,46 @@
+﻿@{
+    ViewData["Title"] = "Front";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Распределеная архетектура фронт и бэкенд</h1>
+</div>
+
+<div class="alert alert-secondary" role="alert">
+    <button type="button" class="btn btn-primary" data-api="GET">GET</button>
+    <button type="button" class="btn btn-success" data-api="POST">POST</button>
+    <button type="button" class="btn btn-warning" data-api="PUT">PUT</button>
+    <button type="button" class="btn btn-danger" data-api="DELETE">DELETE</button>
+</div>
+
+<div class="alert alert-dark" role="alert" >
+    <pre data-out></pre>
+</div>
+
+<script>
+    document.querySelector('[data-api="GET"]')?.addEventListener('click', onClick);
+    document.querySelector('[data-api="POST"]')?.addEventListener('click', onClick);
+    document.querySelector('[data-api="PUT"]')?.addEventListener('click', onClick);
+    document.querySelector('[data-api="DELETE"]')?.addEventListener('click', onClick);
+    function onClick(event) {
+        let method = event.target?.getAttribute('data-api');
+        let body;
+        if (method !== "GET") {
+            body = {
+                ata: 'test'
+            };
+        }
+        fetch("/api/back", {
+            method: method,
+            body,
+        })
+            .then((responce) => responce.json())
+            .then((data) => {
+                console.log(data)
+                let out_element = document.querySelector('[data-out]');
+                if (out_element) out_element.textContent = JSON.stringify(data, null, 2);
+            })
+            ;
+    }
+    
+</script>
