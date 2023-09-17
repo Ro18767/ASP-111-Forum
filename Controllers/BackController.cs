@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace ASP_111.Controllers
 {
@@ -8,20 +9,35 @@ namespace ASP_111.Controllers
     public class BackController : ControllerBase
     {
         [HttpGet]
-        public object Get()
+        public object Get(int x, int y)
         {
+            QueryString QueryString = Request.QueryString;
+            if (!Request.Query.ContainsKey("y"))
+            {
+                Response.StatusCode = StatusCodes.Status400BadRequest;
+                return new
+                {
+                    Error = true,
+                    Message = "Parametr 'y' is required",
+                };
+            }
             return new
             {
-                message = "hello GET"
+                message = "hello GET",
+                x,
+                y,
+                QueryString,
+                Test = Request.Headers["Test"],
             };
         }
 
         [HttpPost]
-        public object Post()
+        public object Post(dynamic body)
         {
             return new
             {
-                message = "hello POST"
+                message = "hello POST",
+                body,
             };
         }
 
@@ -43,3 +59,8 @@ namespace ASP_111.Controllers
         }
     }
 }
+
+//public class PostBody
+//{
+//    public dynamic Data { get; set; }
+//}

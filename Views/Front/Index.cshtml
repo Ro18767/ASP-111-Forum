@@ -18,20 +18,65 @@
 </div>
 
 <script>
-    document.querySelector('[data-api="GET"]')?.addEventListener('click', onClick);
-    document.querySelector('[data-api="POST"]')?.addEventListener('click', onClick);
-    document.querySelector('[data-api="PUT"]')?.addEventListener('click', onClick);
-    document.querySelector('[data-api="DELETE"]')?.addEventListener('click', onClick);
-    function onClick(event) {
+    document.querySelector('[data-api="GET"]')?.addEventListener('click', onClickGET);
+    document.querySelector('[data-api="POST"]')?.addEventListener('click', onClickPOST);
+    document.querySelector('[data-api="PUT"]')?.addEventListener('click', onClickPUT);
+    document.querySelector('[data-api="DELETE"]')?.addEventListener('click', onClickDELETE);
+    function onClickGET(event) {
         let method = event.target?.getAttribute('data-api');
-        let body;
-        if (method !== "GET") {
-            body = {
-                ata: 'test'
-            };
-        }
+
+        fetch("/api/back?x=10&y=20", {
+            method,
+            headers: {
+                "Test": "just value"
+            }
+        })
+            .then((responce) => responce.json())
+            .then((data) => {
+                console.log(data)
+                let out_element = document.querySelector('[data-out]');
+                if (out_element) out_element.textContent = JSON.stringify(data, null, 2);
+            })
+            ;
+    }
+    function onClickPOST(event) {
+        let method = event.target?.getAttribute('data-api');
+        let body = JSON.stringify({
+            ata: 'test',
+            [Math.random()]: Math.random(),
+            "sdfgfghgfhj": "asdsdfdghygyjk",
+            "вапвапвапарорололждлдвыпв": "фврнпаолджэ",
+        });
         fetch("/api/back", {
             method: method,
+            headers: {
+                "Content-Type": "application/json",
+                "Test": "just value"
+            },
+            body,
+        })
+            .then((responce) => responce.json())
+            .then((data) => {
+                console.log(data)
+                let out_element = document.querySelector('[data-out]');
+                if (out_element) out_element.textContent = JSON.stringify(data, null, 2);
+            })
+            ;
+    } 
+    function onClickPOST(event) {
+        let method = event.target?.getAttribute('data-api');
+        let body = JSON.stringify({
+            ata: 'test',
+            [Math.random()]: Math.random(),
+            "sdfgfghgfhj": "asdsdfdghygyjk",
+            "вапвапвапарорололждлдвыпв": "фврнпаолджэ",
+        });
+        fetch("/api/back", {
+            method: method,
+            headers: {
+                "Content-Type": "application/json",
+                "Test": "just value"
+            },
             body,
         })
             .then((responce) => responce.json())
@@ -42,5 +87,54 @@
             })
             ;
     }
+    function onClickPUT(event) {
+        let method = event.target?.getAttribute('data-api');
+        let body = JSON.stringify({
+            ata: 'test',
+            [Math.random()]: Math.random(),
+            "sdfgfghgfhj": "asdsdfdghygyjk",
+            "вапвапвапарорололждлдвыпв": "фврнпаолджэ",
+        });
+        fetch("/api/back", {
+            method: method,
+            headers: {
+                "Content-Type": "application/json",
+                "Test": "just value"
+            },
+            body,
+        })
+            .then((responce) => responce.json())
+            .then((data) => {
+                console.log(data)
+                let out_element = document.querySelector('[data-out]');
+                if (out_element) out_element.textContent = JSON.stringify(data, null, 2);
+            })
+            ;
+    }
+    function onClickDELETE(event) {
+        let method = event.target?.getAttribute('data-api');
+        let body = JSON.stringify({
+            ata: 'test',
+            [Math.random()]: Math.random(),
+            "sdfgfghgfhj": "asdsdfdghygyjk",
+            "вапвапвапарорололждлдвыпв": "фврнпаолджэ",
+        });
+        fetch("/api/back", {
+            method: method,
+            headers: {
+                "Content-Type": "application/json",
+                "Test": "just value"
+            },
+            body,
+        })
+            .then((responce) => responce.json())
+            .then((data) => {
+                console.log(data)
+                let out_element = document.querySelector('[data-out]');
+                if (out_element) out_element.textContent = JSON.stringify(data, null, 2);
+            })
+            ;
+    }
+   
     
 </script>
